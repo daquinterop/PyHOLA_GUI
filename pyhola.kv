@@ -1,0 +1,162 @@
+#:kivy 2.0.0
+<SectionLabel>:
+    canvas.before:
+        Color:
+            hsv: 0, 0, .5
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    halign: 'left'
+    valign: 'middle'
+    text_size: 0.95 * self.width, self.height
+    size_hint: 1, 0.4
+
+<Root>:
+    canvas:
+        Color:
+            hsv: 0, 0, .95
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        # Color:
+        #     rgba: 1, 1, 0, 0.05
+        # Rectangle:
+        #     pos: self.pos
+        #     size: self.size
+    # App Header
+    Label:
+        id: title
+        text: '[b][color=000000]PyHOLA (Python based Hologram API) sensing system data downloader[/b][/color]'
+        pos_hint: {'y': 0, 'center_x': 0.5}
+        size_hint: 0.9, 0.95
+        halign: 'center'
+        valign: 'middle'
+        background_color: 1, 0, 0, 1
+        markup: True
+    # Place to insert device info
+    SectionLabel:
+        text: '1. Insert device and organization info'
+    
+    BoxLayout:
+        id: device_info
+        orientation: 'horizontal'
+        BoxLayout:
+            orientation: 'vertical'
+            Label:
+                text: "[b][color=000000]DeviceID:[/b][/color]"
+                markup: True
+            TextInput:
+                id: deviceID
+                text: ''
+                multiline: False
+                size_hint: 0.8, 0.7
+                pos_hint: {'center_x': 0.5}
+        BoxLayout:
+            orientation: 'vertical'
+            Label:
+                text: "[b][color=000000]Organization ID:[/b][/color]"
+                markup: True
+            TextInput:
+                id: OrganizationID
+                text: ''
+                multiline: False
+                size_hint: 0.8, 0.7
+                pos_hint: {'center_x': 0.5}
+    # Place for APIKey
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint: 0.6, 0.95
+        pos_hint: {'center_x': 0.5}
+        Label:
+            text: "[b][color=000000]API Key:[/b][/color]"
+            markup: True
+        TextInput:
+            id: APIKey_in
+            text: ''
+            multiline: False
+            size_hint: 0.9, 0.7
+            pos_hint: {'center_x': 0.5}
+    BlankSpace:
+        size_hint: 1, 0.2
+    # Place for dates selector
+    SectionLabel:
+        text: '2. Set download parameters'
+    BlankSpace:
+        size_hint: 1, 0.02
+    BoxLayout:
+        id: date_selector
+        orientation: 'vertical'
+        BlankSpace:
+            size_hint: 1, 0.5
+        Label:
+            text: '[b][color=000000]Select date range to download[/b][/color]'
+            markup: True
+        BlankSpace:
+            size_hint: 1, 0.5
+        MDRaisedButton:
+            text: 'Open Date Range picker'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            on_release: app.show_date_picker()
+        BlankSpace:
+            size_hint: 1, 0.5
+        Label:
+            id: date_label
+            text: ''
+            markup: True
+
+    # Place for other options
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: 0.9, 1
+        pos_hint: {'center_x': 0.5}
+        Label:
+            text: '[b][color=000000]Append to file[/b][/color]'
+            markup: True
+        CheckBox:
+            id: append
+            active: False
+            color: 0, 0, 0, 1
+        Label:
+            text: '[b][color=000000]Only live[/b][/color]'
+            markup: True
+        CheckBox:
+            id: isLive
+            active: True
+            color: 0, 0, 0, 1
+        Label:
+            text: '[b][color=000000]Hours to sum up[/b][/color]'
+            markup: True
+        PickHour:
+            size_hint: 0.8, 0.6
+            pos_hint: {'center_y': 0.5}
+    # Place for file location
+    SectionLabel:
+        text: '3. Select file to save downloaded records'
+    BoxLayout:
+        orientation: 'vertical'
+        MDRaisedButton:
+            text: 'Open file'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            on_release: app.open_file()
+    BlankSpace:
+        size_hint: 1, 0.2
+        
+    # Download Button
+    SectionLabel:
+        text: '4. Download'
+    BlankSpace:
+        size_hint: 1, 0.2
+    Button:
+        id: download_button
+        text: 'Download'
+        # size_hint: 0.1, 1
+        pos_hint: {'y': 0, 'center_x': 0.5}
+        size_hint: 0.5, 0.95
+
+    # Place for progress bar
+    BoxLayout:
+        orientation: 'horizontal'
+        Label:
+            text: '[b][color=000000]Progressbar[/b][/color]'
+            markup: True
+    
