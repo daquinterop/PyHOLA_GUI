@@ -11,6 +11,24 @@
     text_size: 0.95 * self.width, self.height
     size_hint: 1, 0.4
 
+<ShellCommand>:
+    canvas.before:
+        Color:
+            rgba: 0, 0, 0, 0.95
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        Color:
+            rgb: 1, 0, 0
+        Rectangle:
+            pos: 0, self.height - 1
+            size: self.width, 1
+    text_size: 0.96 * self.width, self.height
+    size_hint: 1, 1
+    halign: 'left'
+    valign: 'top'
+    font_name: 'Cour'
+
 <Root>:
     canvas:
         Color:
@@ -49,8 +67,9 @@
                 id: deviceID
                 text: ''
                 multiline: False
-                size_hint: 0.8, 0.7
+                size_hint: 0.8, 0.9
                 pos_hint: {'center_x': 0.5}
+                font_size: 0.5 * self.height
         BoxLayout:
             orientation: 'vertical'
             Label:
@@ -60,8 +79,9 @@
                 id: OrganizationID
                 text: ''
                 multiline: False
-                size_hint: 0.8, 0.7
+                size_hint: 0.8, 0.9
                 pos_hint: {'center_x': 0.5}
+                font_size: 0.5 * self.height
     # Place for APIKey
     BoxLayout:
         orientation: 'vertical'
@@ -71,11 +91,12 @@
             text: "[b][color=000000]API Key:[/b][/color]"
             markup: True
         TextInput:
-            id: APIKey_in
+            id: APIKey
             text: ''
             multiline: False
-            size_hint: 0.9, 0.7
+            size_hint: 0.9, 0.9
             pos_hint: {'center_x': 0.5}
+            font_size: 0.5 * self.height
     BlankSpace:
         size_hint: 1, 0.2
     # Place for dates selector
@@ -88,21 +109,21 @@
         orientation: 'vertical'
         BlankSpace:
             size_hint: 1, 0.5
-        Label:
-            text: '[b][color=000000]Select date range to download[/b][/color]'
-            markup: True
+        # Label:
+        #     text: '[b][color=000000]Select date range to download[/b][/color]'
+        #     markup: True
         BlankSpace:
             size_hint: 1, 0.5
         MDRaisedButton:
-            text: 'Open Date Range picker'
+            text: 'Select date range to download'
             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-            on_release: app.show_date_picker()
+            on_release: root.show_date_picker()
         BlankSpace:
             size_hint: 1, 0.5
         Label:
             id: date_label
-            text: ''
-            markup: True
+            text: 'Select date range'
+            color: 0, 0, 0, 1
 
     # Place for other options
     BoxLayout:
@@ -110,7 +131,7 @@
         size_hint: 0.9, 1
         pos_hint: {'center_x': 0.5}
         Label:
-            text: '[b][color=000000]Append to file[/b][/color]'
+            text: '[b][color=000000]Append to existing file[/b][/color]'
             markup: True
         CheckBox:
             id: append
@@ -127,19 +148,26 @@
             text: '[b][color=000000]Hours to sum up[/b][/color]'
             markup: True
         PickHour:
+            id: timeDelta
             size_hint: 0.8, 0.6
             pos_hint: {'center_y': 0.5}
     # Place for file location
     SectionLabel:
         text: '3. Select file to save downloaded records'
+    BlankSpace:
+        size_hint: 1, 0.1
     BoxLayout:
         orientation: 'vertical'
         MDRaisedButton:
             text: 'Open file'
             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-            on_release: app.open_file()
+            on_release: root.open_file()
+        Label:
+            id: file_label
+            text: 'Select the file'
+            color: 0, 0, 0, 1
     BlankSpace:
-        size_hint: 1, 0.2
+        size_hint: 1, 0.1
         
     # Download Button
     SectionLabel:
@@ -152,11 +180,15 @@
         # size_hint: 0.1, 1
         pos_hint: {'y': 0, 'center_x': 0.5}
         size_hint: 0.5, 0.95
-
+        on_release: root.download()
+        background_normal: ''
+        background_color: 51/255, 204/255, 51/255, 1.
+    BlankSpace:
+        size_hint: 1, 0.2
     # Place for progress bar
     BoxLayout:
+        size_hint: 1, 1.5
         orientation: 'horizontal'
-        Label:
-            text: '[b][color=000000]Progressbar[/b][/color]'
-            markup: True
+        ShellCommand:
+            id: console_prompt
     
