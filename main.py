@@ -93,13 +93,20 @@ class Root(BoxLayout):
                     apiKey=APIKey,
                     startTime=date_from,
                     endTime=date_to,
-                    orgID=OrganizationID
+                    orgID=OrganizationID,
+                    isLive=self.ids.isLive.active
                 )
                 Hol.retrieve()
+                Hol.save_records(
+                    filepath=str(self.path[0]),
+                    sep='\t',
+                    append=self.ids.append.active,
+                    timeDelta=int(self.ids.timeDelta.text)
+                )
             except RequestException:
-                self.print_msg('You must define all the request parameters')
+                self.print_msg('Something went wrong with the request')
             
-            self.print_msg(f'{len(Hol.records)} records were successfully requested')
+            self.print_msg(f'{len(Hol.records)} records written to {self.path[0]}')
         else:
             self.print_msg('You must define a date range')
 
@@ -110,8 +117,5 @@ class PyHOLAApp(MDApp):
         
         return Root()
     
-    
-        
-
 if __name__ == '__main__':
     PyHOLAApp().run()
