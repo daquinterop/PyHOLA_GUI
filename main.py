@@ -14,11 +14,15 @@ from plyer import filechooser # Do this during packaging: https://github.com/kiv
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.storage.jsonstore import JsonStore
+from kivy.clock import Clock
 
 from base import Hologram
-from datetime import datetime
+from datetime import date, datetime, time, timedelta
 from requests.exceptions import RequestException
-
+from kivy.clock import mainthread
+import threading
+import functools
+from time import sleep
 
 # Holds the label of every section
 class SectionLabel(Label):
@@ -115,9 +119,9 @@ class AboutUS(Popup):
         )
         self.content.add_widget(BlankSpace(size_hint=(1, 0.05)))
         
-        
-    
 
+
+    
 # Root widget
 class Root(BoxLayout):
     # Retrieve credentials
@@ -132,9 +136,20 @@ class Root(BoxLayout):
         orgid = ''
         apikey = ''
         timezone = '-7'
+    download_progress = 0
+    Hol = Hologram(
+        deviceID=deviceid,
+        apiKey=apikey,
+        startTime=None,
+        endTime=None,
+        orgID=orgid,
+    )
+    date_from = None
+    date_to = None
+    
     def __init__(self, **kwargs):
         super(Root, self).__init__(orientation='vertical', *kwargs)
-        # self.button = Button(size_hint=(.5, .5), pos_hint={'x_center': 0.5})
+        Clock.schedule_interval(self.terminate_download, 0.5)
         
     # Save date
     def on_save(self, instance, value, date_range):
@@ -143,7 +158,7 @@ class Root(BoxLayout):
         self.date_range = date_range
     # Cancel_date
     def on_cancel(self, instance, value):
-        self.ids.date_label.text = 'Select a date[/color]'
+        self.ids.date_label.text = 'Select a date'
 
     def print_msg(self, msg='Downloading'):
         self.ids.console_prompt.text += str(msg)+'\n'
@@ -171,7 +186,21 @@ class Root(BoxLayout):
         popup = WarningPopup(message, title)
         popup.open()
 
-    def download(self):
+    
+    def update_progress(self, dt):
+        # stuff that must be done on the main thread
+        self.ids.progressbar.value += 1
+    
+    
+    def download_trigger(self):
+        if not hasattr(self, 'date_range'):
+            self.open_warn('You must define a date range')
+            return None 
+        try: 
+            self.path
+        except AttributeError:
+            self.open_warn('You must select a file to download the records')
+            return None
         self.store.put(
             'credentials', 
             deviceid=self.ids.deviceID.text,
@@ -182,40 +211,68 @@ class Root(BoxLayout):
             'parameters', 
             timezone=self.ids.timeDelta.text
         )
-        if hasattr(self, 'date_range'):
-            # self.print_msg('Downloading...')
-            deviceID = self.ids.deviceID.text.strip()
-            OrganizationID = self.ids.OrganizationID.text.strip()
-            APIKey = self.ids.APIKey.text.strip()
-            date_from =  datetime.combine(self.date_range[0], datetime.min.time())
-            date_to = datetime.combine(self.date_range[-1], datetime.min.time())
-            try: 
-                Hol = Hologram(
-                    deviceID=deviceID,
-                    apiKey=APIKey,
-                    startTime=date_from,
-                    endTime=date_to,
-                    orgID=OrganizationID,
-                    isLive=self.ids.isLive.active
-                )
-                try:
-                    Hol.retrieve()
-                except IndexError:
-                    self.open_warn('No records for the requested period')
-                    return None
-                Hol.save_records(
-                    filepath=str(self.path[0]),
-                    sep='\t',
-                    append=self.ids.append.active,
-                    timeDelta=int(self.ids.timeDelta.text)
-                )
-                self.open_warn(f'{len(Hol.records)} records written to {self.path[0]}', 'Successful download')
-            except RequestException:
-                self.open_warn('Something went wrong with the request')
+        self.download_init()
+        self.date_from =  datetime.combine(self.date_range[0], datetime.min.time())
+        self.date_to = datetime.combine(self.date_range[-1], datetime.min.time()) + timedelta(days=1)
+        if self.date_to > datetime.now():
+            self.date_to = datetime.now() + timedelta(days=1)
+
+        self.ids.progressbar.max = (self.date_to - self.date_from).days 
+        endDate = self.date_to
+        self.date_to = self.date_from + timedelta(days=1)
+        
+        while self.date_from < endDate:
+            self.Hol.startTime = self.date_from
+            self.Hol.endTime = self.date_to
+            threading.Thread(target=self.download).start()
+            print(self.download_progress)
+            self.date_from += timedelta(days=1)
+            self.date_to += timedelta(days=1)
+        print()
+        
+    def terminate_download(self, dt):
+        if self.ids.progressbar.value == self.ids.progressbar.max:
+            self.save_records()
+            self.Hol = Hologram(
+                deviceID=self.deviceid,
+                apiKey=self.apikey,
+                startTime=None,
+                endTime=None,
+                orgID=self.orgid,
+            )
+            self.ids.progressbar.value = 0
             
-           
-        else:
-            self.open_warn('You must define a date range')
+
+    def download_init(self):
+        self.Hol.deviceID = self.ids.deviceID.text.strip()
+        self.Hol.OrganizationID = self.ids.OrganizationID.text.strip()
+        self.Hol.APIKey = self.ids.APIKey.text.strip()
+
+
+    def download(self):
+        try: 
+            self.Hol.startTime = self.date_from
+            self.Hol.endTime = self.date_to
+            try:
+                self.Hol.retrieve()
+                Clock.schedule_once(functools.partial(self.update_progress))
+            except RequestException:
+                self.ids.progressbar.max -= 1
+                return None
+        except RequestException:
+            self.open_warn('Something went wrong with the request')
+            self.ids.progressbar.max -= 1
+
+
+    def save_records(self):
+        self.Hol.save_records(
+            filepath=str(self.path[0]),
+            sep='\t',
+            append=self.ids.append.active,
+            timeDelta=int(self.ids.timeDelta.text)
+        )
+        self.open_warn(f'{len(self.Hol.records)} records written to {self.path[0]}', 'Successful download')
+
 
 class PyHOLAApp(MDApp):
     path = ObjectProperty(None)

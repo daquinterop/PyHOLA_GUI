@@ -59,6 +59,7 @@ class Hologram():
         # Start downloading data and in case not all the data was retrieve, it'll continue downloading data
         self._data_records = []
         unique_ids = [] # To store ids
+
         continues = True
         while continues:
             self._response = requests.get(self._urlBuild())
@@ -88,6 +89,7 @@ class Hologram():
         
         # Define the number of fields as the most common number of fields among all the records 
         # (_id not included) and drop records that doesn't match n_records
+        print(self.startTime, self.endTime)
         self._n_fields = Counter(map(len, self.records)).most_common(1)[0][0] - 1
         self.records = [i for i in self.records[:] if len(i) == (self._n_fields + 1)]
 
@@ -176,3 +178,14 @@ class Hologram():
         f.close()
         print(f'{len(lines)} records written to {filepath}')
         return None
+
+
+if __name__ == '__main__':
+    Hol = Hologram(
+        deviceID='758380',
+        apiKey='4mS1NrMZOEdWxRsDlv9oc2DJ61dLax',
+        startTime=datetime(2021, 8, 20),
+        endTime=datetime.now(),
+        orgID='35928'
+    )
+    Hol.retrieve()
