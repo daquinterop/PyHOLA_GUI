@@ -6,6 +6,7 @@ from kivy.properties import (
 from kivy.config import Config
 Config.set('graphics', 'width', '800')
 Config.set('graphics', 'height', '600')
+Config.set('input', 'mouse', 'mouse,disable_multitouch')
 from kivy.uix.label import Label
 from kivy.uix.spinner import Spinner
 from kivymd.uix.picker import MDDatePicker
@@ -17,12 +18,14 @@ from kivy.storage.jsonstore import JsonStore
 from kivy.clock import Clock
 
 from base import Hologram
-from datetime import date, datetime, time, timedelta
+from datetime import  datetime, timedelta
 from requests.exceptions import RequestException
-from kivy.clock import mainthread
 import threading
 import functools
-from time import sleep
+import os
+import tempfile
+
+credentials_path = os.path.join(tempfile.gettempdir(), 'credentials.json')
 
 # Holds the label of every section
 class SectionLabel(Label):
@@ -49,17 +52,21 @@ class ShellCommand(Label):
         self.text = ''
 
 about_us_text = '''
-[i]PyHOLA_GUI 21.9[/i]
-
-[b][color=ffffff]Water and irrigation management lab[/b][/color]
-University of Nevada, Reno
-
-Department of Agriculture, Veterinary & Rangeland Science
-Knudset Resource Center. 920 Valley Road. Reno, NV. Lab 117
-Alejandro Andrade-Rodriguez, Ph.D.
+[b]Manuel A. Andrade[/b]*
+Assistant Professor of Water and Irrigation Management
 andradea@unr.edu
 
-For support: dquintero@nevada.unr.edu
+[b]Diego A. Quintero[/b]*
+Graduate research assistant
+dquintero@nevada.unr.edu
+
+[b]Uriel Cholula[/b]*
+Graduate research assistant
+ucholula@nevada.unr.edu
+
+*Unversity of Nevada, Reno
+Dept. of Agriculture, Veterinary and Rangeland Sciences
+Water and Irrigation Management Lab
 '''
 class AboutUSLabel(Label):
     def __init__(self, **kwargs):
@@ -100,8 +107,8 @@ class WarningPopup(Popup):
 class AboutUS(Popup):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.title = 'About us'
-        self.size = (400, 400)
+        self.title = 'PyHOLA_GUI  Version 21.9'
+        self.size = (450, 430)
         self.size_hint = (None, None)
         self.content = BoxLayout(orientation = 'vertical')
         self.content.add_widget(
@@ -125,7 +132,7 @@ class AboutUS(Popup):
 # Root widget
 class Root(BoxLayout):
     # Retrieve credentials
-    store = JsonStore('credentials.json')
+    store = JsonStore(credentials_path)
     try:
         deviceid = store.get('credentials')['deviceid']
         orgid = store.get('credentials')['orgid']
@@ -201,6 +208,13 @@ class Root(BoxLayout):
         except AttributeError:
             self.open_warn('You must select a file to download the records')
             return None
+        if os.path.exists(self.path[0]) and not self.ids.append.active:
+            self.open_warn('File already exists, you must create a new one')
+            return None
+        if not os.path.exists(self.path[0]) and self.ids.append.active:
+            self.open_warn('File does not exist, you must select a existing file to append records to')
+            return None
+
         self.store.put(
             'credentials', 
             deviceid=self.ids.deviceID.text,
@@ -245,8 +259,8 @@ class Root(BoxLayout):
 
     def download_init(self):
         self.Hol.deviceID = self.ids.deviceID.text.strip()
-        self.Hol.OrganizationID = self.ids.OrganizationID.text.strip()
-        self.Hol.APIKey = self.ids.APIKey.text.strip()
+        self.Hol.orgID = self.ids.OrganizationID.text.strip()
+        self.Hol.apiKey = self.ids.APIKey.text.strip()
 
 
     def download(self):
@@ -272,6 +286,7 @@ class Root(BoxLayout):
             timeDelta=int(self.ids.timeDelta.text)
         )
         self.open_warn(f'{len(self.Hol.records)} records written to {self.path[0]}', 'Successful download')
+        
 
 
 class PyHOLAApp(MDApp):

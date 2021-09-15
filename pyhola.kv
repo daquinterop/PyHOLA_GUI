@@ -208,24 +208,37 @@
         size_hint: 1, 0.2
     Button:
         id: download_button
-        text: 'Download'
+        text: '[b]Download[/b]'
+        markup: True
         # size_hint: 0.1, 1
         pos_hint: {'y': 0, 'center_x': 0.5}
         size_hint: 0.5, 0.95
         on_release: root.download_trigger()
         background_normal: ''
-        background_color: 51/255, 204/255, 51/255, 1.
-    BlankSpace:
-        size_hint: 1, 0.2
+        background_color: 51/255, 102/255, 0/255, 1.
     # Place for progress bar
     BoxLayout:
         size_hint: 0.8, 1.5
         orientation: 'vertical'
         pos_hint: {'center_x': 0.5}
         Label:
-            text: 'Download progress'
+            text: '[b]Download progress:[/b]'
             color: 0, 0, 0, 1
+            markup: True
         ProgressBar:
             id: progressbar
             value: root.download_progress
+            canvas:
+                BorderImage:
+                    border: (12, 12, 12, 12)
+                    pos: self.x, self.center_y - 12
+                    size: self.width, 24
+                    source: 'grey.png'
+                BorderImage:
+                    border: [int(min(self.width * (self.value / float(self.max)) if self.max else 0, 12))] * 4
+                    pos: self.x, self.center_y - 12
+                    size: self.width * (self.value / float(self.max)) if self.max else 0, 24
+                    source: 'green.png'
+    BlankSpace:
+        size_hint: 1, 0.2
     
