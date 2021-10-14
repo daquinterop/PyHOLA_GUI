@@ -136,25 +136,38 @@
     BlankSpace:
         size_hint: 1, 0.02
     BoxLayout:
-        id: date_selector
-        orientation: 'vertical'
-        BlankSpace:
-            size_hint: 1, 0.5
-        # Label:
-        #     text: '[b][color=000000]Select date range to download[/b][/color]'
-        #     markup: True
-        BlankSpace:
-            size_hint: 1, 0.5
-        MDRaisedButton:
-            text: 'Select date range to download'
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-            on_release: root.show_date_picker()
-        BlankSpace:
-            size_hint: 1, 0.5
-        Label:
-            id: date_label
-            text: 'Select date range'
-            color: 0, 0, 0, 1
+        orientation: 'horizontal'
+        BoxLayout:
+            id: date_selector
+            orientation: 'vertical'
+            size_hint: 0.40, 1
+            BlankSpace:
+                size_hint: 1, 0.5
+            BlankSpace:
+                size_hint: 1, 0.5
+            MDRaisedButton:
+                text: 'Select date range to download'
+                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                on_release: root.show_date_picker()
+            BlankSpace:
+                size_hint: 1, 0.5
+            Label:
+                id: date_label
+                text: 'Select date range'
+                color: 0, 0, 0, 1
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 0.60, 1
+            BlankSpace:
+                size_hint: 1, 0.5
+            PickHour:
+                id: timeDelta
+                size_hint: .9, 2.5
+                pos_hint: {'center_y': 0.5, 'center_x': 0.5}
+                text: root.timezone
+            Label:
+                text: 'Select the timezone'
+                color: 0, 0, 0, 1
 
     # Place for other options
     BoxLayout:
@@ -175,14 +188,7 @@
             id: isLive
             active: True
             color: 0, 0, 0, 1
-        Label:
-            text: '[b][color=000000]Time zone[/b][/color]'
-            markup: True
-        PickHour:
-            id: timeDelta
-            size_hint: 0.8, 0.6
-            pos_hint: {'center_y': 0.5}
-            text: root.timezone
+        
     # Place for file location
     SectionLabel:
         text: '3. Select file to save downloaded records'

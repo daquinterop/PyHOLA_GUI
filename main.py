@@ -24,8 +24,16 @@ import threading
 import functools
 import os
 import tempfile
+import json
 
 credentials_path = os.path.join(tempfile.gettempdir(), 'credentials.json')
+
+f = open('timezones.json')
+timezones = json.load(f)
+tz_offset = {
+    tz['text']: tz['offset']
+    for tz in timezones
+}
 
 # Holds the label of every section
 class SectionLabel(Label):
@@ -42,8 +50,8 @@ class BlankSpace(Widget):
 class PickHour(Spinner):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.text = '0'
-        self.values = (str(i) for i in range(-24, 24))
+        self.text = list(tz_offset.keys())[0]
+        self.values = list(tz_offset.keys())
 
 class ShellCommand(Label):
     def __init__(self, **kwargs):
@@ -64,9 +72,12 @@ dquintero@nevada.unr.edu
 Graduate research assistant
 ucholula@nevada.unr.edu
 
-*Unversity of Nevada, Reno
+*University of Nevada, Reno
 Dept. of Agriculture, Veterinary and Rangeland Sciences
 Water and Irrigation Management Lab
+
+The development of this software is based upon work that is 
+supported by the Nevada System of Higher Education (NSHE).
 '''
 class AboutUSLabel(Label):
     def __init__(self, **kwargs):
@@ -107,8 +118,8 @@ class WarningPopup(Popup):
 class AboutUS(Popup):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.title = 'PyHOLA_GUI  Version 21.9'
-        self.size = (450, 430)
+        self.title = 'PyHOLA_GUI  Version 0.1.2110'
+        self.size = (450, 450)
         self.size_hint = (None, None)
         self.content = BoxLayout(orientation = 'vertical')
         self.content.add_widget(
@@ -142,7 +153,7 @@ class Root(BoxLayout):
         deviceid = ''
         orgid = ''
         apikey = ''
-        timezone = '-7'
+        timezone =list(tz_offset.keys())[0]
     download_progress = 0
     Hol = Hologram(
         deviceID=deviceid,
@@ -283,7 +294,7 @@ class Root(BoxLayout):
             filepath=str(self.path[0]),
             sep='\t',
             append=self.ids.append.active,
-            timeDelta=int(self.ids.timeDelta.text)
+            timeDelta=tz_offset[self.ids.timeDelta.text]
         )
         self.open_warn(f'{len(self.Hol.records)} records written to {self.path[0]}', 'Successful download')
         
