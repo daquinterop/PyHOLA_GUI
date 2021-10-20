@@ -17,6 +17,7 @@ import base64
 import os 
 from collections import Counter
 import dateutil.parser
+from requests.models import parse_header_links
 
 class Hologram():
     '''
@@ -44,6 +45,7 @@ class Hologram():
         self.startTime = startTime
         self.endTime = endTime
         self.records = []
+        self.unique_ids = []
         return None
     
     def _urlBuild(self):
@@ -58,8 +60,7 @@ class Hologram():
         ''' Retrieve the data for the requested period'''
         # Start downloading data and in case not all the data was retrieve, it'll continue downloading data
         self._data_records = []
-        unique_ids = [] # To store ids
-
+         # To store ids
         continues = True
         while continues:
             self._response = requests.get(self._urlBuild())
@@ -68,13 +69,13 @@ class Hologram():
             self.response_dict = json.loads(self._response.text)
             for record in self.response_dict['data']:
                 id = record['record_id']
-                if id in unique_ids: # If record is already appended, then continue
+                if id in self.unique_ids: # If record is already appended, then continue
                     continue
                 else:
                     self._data_records.append(json.loads(record['data']))
                     self._data_records[-1]['data'] = base64.b64decode(self._data_records[-1]['data']).decode('utf8').split('~')
                     self._data_records[-1]['data'].append(id)
-                    unique_ids.append(id)
+                    self.unique_ids.append(id)
             continues = self.response_dict['continues']
             if continues: # If there is still more data to download
                 former_date = self.endTime
@@ -109,7 +110,7 @@ class Hologram():
         '''
         # Raise exception if there are no records to save
         if len(self.records) <= 0:
-            raise AttributeError("No record has ben downloaded yet")
+            raise AttributeError("No record has been downloaded yet")
         # Raise exception if the file to append to does not exist
         if append:
             if not os.path.exists(filepath):
@@ -125,7 +126,16 @@ class Hologram():
                 raise IndexError(f'colnames does not match with number {self._n_fields} of fields')
 
         # TODO: Raise exception if the number of fields does not match the columns of the existing file (append mode)
-
+        unique_records = []
+        self.unique_ids = []
+        for rec in self.records:
+            _id = rec['_id']
+            if _id in self.unique_ids:
+                continue
+            else:
+                unique_records.append(rec)
+                self.unique_ids.append(_id)
+        self.records = unique_records
         # Try to figure out which of the columns is the date column
         for dateSort, item in self.records[0].items():
             try:
@@ -138,9 +148,15 @@ class Hologram():
             except ValueError:
                 dateSort = None
         # Perform sorting if it was able to find a date column
+        records_to_remove = []
         if dateSort != None:
             for n, record in enumerate(self.records):
-                self.records[n][dateSort] =  dateutil.parser.parse(record[dateSort].replace('_', ' '))
+                try:
+                    self.records[n][dateSort] =  dateutil.parser.parse(record[dateSort].replace('_', ' '), ignoretz=True)
+                except dateutil.parser.ParserError:
+                    records_to_remove.append(self.records[n])
+            for rec in records_to_remove:
+                self.records.remove(rec)
             self.records = sorted(self.records, key=lambda x: x[dateSort])
         else:
             print('Date column cannot  be identified')
@@ -149,6 +165,8 @@ class Hologram():
         for n, record in enumerate(self.records):
             self.records[n][dateSort] =  (record[dateSort] + timedelta(hours=timeDelta)).strftime(dateFormat)
 
+        self.records = self.records[20:]
+        
         # Lines to write on the file
         lines = []
         if not append: # If not append, create columns headers
@@ -184,8 +202,8 @@ if __name__ == '__main__':
     Hol = Hologram(
         deviceID='758380',
         apiKey='4mS1NrMZOEdWxRsDlv9oc2DJ61dLax',
-        startTime=datetime(2021, 8, 20),
-        endTime=datetime.now(),
+        startTime=datetime(2021, 10, 16),
+        endTime=datetime(2021, 10, 17),
         orgID='35928'
     )
     Hol.retrieve()

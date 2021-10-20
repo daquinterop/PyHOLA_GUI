@@ -20,6 +20,7 @@ from kivy.clock import Clock
 from base import Hologram
 from datetime import  datetime, timedelta
 from requests.exceptions import RequestException
+import requests
 import threading
 import functools
 import os
@@ -225,6 +226,11 @@ class Root(BoxLayout):
         if not os.path.exists(self.path[0]) and self.ids.append.active:
             self.open_warn('File does not exist, you must select a existing file to append records to')
             return None
+        try:
+            _ = requests.get('http://www.google.com', timeout=3)
+        except (requests.ConnectionError, requests.Timeout):
+            self.open_warn('No internet connection')
+            return None
 
         self.store.put(
             'credentials', 
@@ -238,6 +244,7 @@ class Root(BoxLayout):
         )
         self.download_init()
         self.date_from =  datetime.combine(self.date_range[0], datetime.min.time())
+        self.date_from -= timedelta(days=1)
         self.date_to = datetime.combine(self.date_range[-1], datetime.min.time()) + timedelta(days=1)
         if self.date_to > datetime.now():
             self.date_to = datetime.now() + timedelta(days=1)
@@ -257,6 +264,17 @@ class Root(BoxLayout):
         
     def terminate_download(self, dt):
         if self.ids.progressbar.value == self.ids.progressbar.max:
+            if len(self.Hol.records) < 1:
+                self.open_warn('No records for the requested period')
+                self.Hol = Hologram(
+                    deviceID=self.deviceid,
+                    apiKey=self.apikey,
+                    startTime=None,
+                    endTime=None,
+                    orgID=self.orgid,
+                )
+                self.ids.progressbar.max = 1e10
+                return
             self.save_records()
             self.Hol = Hologram(
                 deviceID=self.deviceid,
