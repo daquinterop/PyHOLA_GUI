@@ -26,7 +26,7 @@ class Hologram():
     --------------------------------------
     '''
 
-    def __init__(self, deviceID, apiKey, orgID, startTime, endTime, recordLimit=1000, isLive=False):
+    def __init__(self, apiKey, orgID, startTime, endTime, deviceID=None, recordLimit=1000, isLive=False):
         '''  
         Args:
             recordLimit: int    | Maximum number of records to be obtained
@@ -52,9 +52,14 @@ class Hologram():
         ''' Build the URL to request based on init attributes'''
         self._posix_startTime = int(self.startTime.timestamp())
         self._posix_endTime = int(self.endTime.timestamp())
-        return f'https://dashboard.hologram.io/api/1/csr/rdm?orgid={self.orgID}' \
-            f'&deviceid={self.deviceID}&timestart={self._posix_startTime}&timeend={self._posix_endTime}' \
+        if self.deviceID is None:
+            return f'https://dashboard.hologram.io/api/1/csr/rdm?orgid={self.orgID}' \
+            f'&timestart={self._posix_startTime}&timeend={self._posix_endTime}' \
             f'&apikey={self.apiKey}&islive={str(self.isLive).lower()}&limit={self.recordLimit}'
+        else:
+            return f'https://dashboard.hologram.io/api/1/csr/rdm?orgid={self.orgID}' \
+                f'&deviceid={self.deviceID}&timestart={self._posix_startTime}&timeend={self._posix_endTime}' \
+                f'&apikey={self.apiKey}&islive={str(self.isLive).lower()}&limit={self.recordLimit}'
 
     def retrieve(self):
         ''' Retrieve the data for the requested period'''
@@ -87,11 +92,16 @@ class Hologram():
             tmp_data_list = record['data']
             self.records.append(dict(zip(range(len(tmp_data_list) - 1), tmp_data_list[:-1])))
             self.records[-1]['_id'] = tmp_data_list[-1]
+            self.records[-1]['device_name'] = str(record.get('device_name'))
+            self.records[-1]['device_id'] = str(record.get('device_id'))
         
         # Define the number of fields as the most common number of fields among all the records 
         # (_id not included) and drop records that doesn't match n_records
         print(self.startTime, self.endTime)
-        self._n_fields = Counter(map(len, self.records)).most_common(1)[0][0] - 1
+        if len(self.records) > 0:
+            self._n_fields = Counter(map(len, self.records)).most_common(1)[0][0] - 1
+        else:
+            return None
         self.records = [i for i in self.records[:] if len(i) == (self._n_fields + 1)]
 
         print(f'Successfully requested {len(self.records)} records')
@@ -200,10 +210,11 @@ class Hologram():
 
 if __name__ == '__main__':
     Hol = Hologram(
-        deviceID='758380',
+        # deviceID='758380',
         apiKey='4mS1NrMZOEdWxRsDlv9oc2DJ61dLax',
-        startTime=datetime(2021, 10, 16),
-        endTime=datetime(2021, 10, 17),
+        startTime=datetime(2021, 11, 1),
+        endTime=datetime.today(),
         orgID='35928'
     )
     Hol.retrieve()
+    print()

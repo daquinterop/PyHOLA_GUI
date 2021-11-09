@@ -85,7 +85,34 @@
     # Place to insert device info
     SectionLabel:
         text: '1. Insert device and organization info'
-    
+    # Place for APIKey
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: 0.85, 0.95
+        pos_hint: {'center_x': 0.5}
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 0.65, 1
+            Label:
+                text: "[b][color=000000]API Key:[/b][/color]"
+                markup: True
+            TextInput:
+                id: APIKey
+                text: root.apikey
+                multiline: False
+                size_hint: 0.9, 0.9
+                pos_hint: {'center_x': 0.5}
+                font_size: 0.5 * self.height
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 0.35, 1
+            Label:
+                text: '[b][color=000000]Only download from one device[/b][/color]'
+                markup: True
+            CheckBox:
+                id: oneDevice
+                active: True
+                color: 0, 0, 0, 1
     BoxLayout:
         id: device_info
         orientation: 'horizontal'
@@ -101,6 +128,7 @@
                 size_hint: 0.8, 0.9
                 pos_hint: {'center_x': 0.5}
                 font_size: 0.5 * self.height
+                disabled: not oneDevice.active
         BoxLayout:
             orientation: 'vertical'
             Label:
@@ -113,21 +141,6 @@
                 size_hint: 0.8, 0.9
                 pos_hint: {'center_x': 0.5}
                 font_size: 0.5 * self.height
-    # Place for APIKey
-    BoxLayout:
-        orientation: 'vertical'
-        size_hint: 0.6, 0.95
-        pos_hint: {'center_x': 0.5}
-        Label:
-            text: "[b][color=000000]API Key:[/b][/color]"
-            markup: True
-        TextInput:
-            id: APIKey
-            text: root.apikey
-            multiline: False
-            size_hint: 0.9, 0.9
-            pos_hint: {'center_x': 0.5}
-            font_size: 0.5 * self.height
     BlankSpace:
         size_hint: 1, 0.2
     # Place for dates selector

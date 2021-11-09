@@ -287,9 +287,13 @@ class Root(BoxLayout):
             
 
     def download_init(self):
-        self.Hol.deviceID = self.ids.deviceID.text.strip()
-        self.Hol.orgID = self.ids.OrganizationID.text.strip()
         self.Hol.apiKey = self.ids.APIKey.text.strip()
+        self.Hol.orgID = self.ids.OrganizationID.text.strip()
+        if self.ids.oneDevice.active:
+            self.Hol.deviceID = self.ids.deviceID.text.strip()
+        else:
+            self.Hol.deviceID = None
+            
 
 
     def download(self):
