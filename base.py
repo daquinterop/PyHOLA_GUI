@@ -78,7 +78,9 @@ class Hologram():
                     continue
                 else:
                     self._data_records.append(json.loads(record['data']))
-                    self._data_records[-1]['data'] = base64.b64decode(self._data_records[-1]['data']).decode('utf8').split('~')
+                    data_obj = self._data_records[-1]['data']
+                    if isinstance(data_obj, str):
+                        self._data_records[-1]['data'] = base64.b64decode(data_obj).decode('utf8').split('~')
                     self._data_records[-1]['data'].append(id)
                     self.unique_ids.append(id)
             continues = self.response_dict['continues']
@@ -98,16 +100,16 @@ class Hologram():
         # Define the number of fields as the most common number of fields among all the records 
         # (_id not included) and drop records that doesn't match n_records
         print(self.startTime, self.endTime)
-        if len(self.records) > 0:
-            self._n_fields = Counter(map(len, self.records)).most_common(1)[0][0] - 1
-        else:
-            return None
+        # if len(self.records) > 0:
+        self._n_fields = Counter(map(len, self.records)).most_common(1)[0][0] - 1
+        # else:
+            # return None
         self.records = [i for i in self.records[:] if len(i) == (self._n_fields + 1)]
 
         print(f'Successfully requested {len(self.records)} records')
         return None
 
-    def save_records(self, filepath, sep=',', colnames=None, append=False, timeDelta=0, dateFormat='%Y-%m-%d %H:%M:%S'):
+    def save_records(self, filepath, sep=',', colnames=None, append=False, timeDelta=0, dateFormat='%Y-%m-%d %H:%M:%S', **kwargs):
         '''
         Save records to a text file.
         Args:
@@ -118,6 +120,9 @@ class Hologram():
             - timeDelta: int | Hours to add to the raw date in case it's not local time
             - dateFormat str | format to print dates
         '''
+        absStartDate = kwargs.get('absStartDate', self.startTime)
+        absStartDate = datetime(absStartDate.year, absStartDate.month, absStartDate.day) - timedelta(hours=timeDelta+1)
+        absEndDate = self.endTime - timedelta(hours=timeDelta)
         # Raise exception if there are no records to save
         if len(self.records) <= 0:
             raise AttributeError("No record has been downloaded yet")
@@ -163,6 +168,8 @@ class Hologram():
             for n, record in enumerate(self.records):
                 try:
                     self.records[n][dateSort] =  dateutil.parser.parse(record[dateSort].replace('_', ' '), ignoretz=True)
+                    if (absStartDate > self.records[n][dateSort]) or (absEndDate < self.records[n][dateSort]):
+                        records_to_remove.append(self.records[n])
                 except dateutil.parser.ParserError:
                     records_to_remove.append(self.records[n])
             for rec in records_to_remove:
@@ -217,4 +224,5 @@ if __name__ == '__main__':
         orgID='35928'
     )
     Hol.retrieve()
+    Hol.save_records('C:\\test.txt')
     print()

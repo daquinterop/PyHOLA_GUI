@@ -26,6 +26,7 @@ import functools
 import os
 import tempfile
 import json
+import sys
 
 credentials_path = os.path.join(tempfile.gettempdir(), 'credentials.json')
 
@@ -35,6 +36,8 @@ tz_offset = {
     tz['text']: tz['offset']
     for tz in timezones
 }
+
+args = {n: arg for n, arg in enumerate(sys.argv)}
 
 # Holds the label of every section
 class SectionLabel(Label):
@@ -169,6 +172,22 @@ class Root(BoxLayout):
     def __init__(self, **kwargs):
         super(Root, self).__init__(orientation='vertical', *kwargs)
         Clock.schedule_interval(self.terminate_download, 0.5)
+        '''
+        This is ussed during testing to set parameters
+        '''
+        if args.get(1) == 'test':
+            import os
+            base_date = datetime(2021, 7, 1)
+            self.date_range = [base_date - timedelta(days=x) for x in range(180)]
+            self.date_range = self.date_range[::-1]
+            self.path = ['C:\\Users\\dandres\\Desktop\\test.csv']
+            self.ids.file_label.text = str(self.path[0])
+            ddrange = f'Download from {self.date_range[0]} to {self.date_range[-1]}'
+            self.ids.date_label.text = f'{ddrange}'
+            try:
+                os.remove(self.path[0])
+            except FileNotFoundError:
+                pass
         
     # Save date
     def on_save(self, instance, value, date_range):
@@ -210,8 +229,18 @@ class Root(BoxLayout):
         # stuff that must be done on the main thread
         self.ids.progressbar.value += 1
     
+
+    def download_main_thread(self):
+        donwload_thread = threading.Thread(target=self.download_trigger)
+        donwload_thread.start()
+
     
     def download_trigger(self):
+        if args.get(1) == 'test': 
+            try:
+                os.remove(self.path[0])
+            except FileNotFoundError:
+                pass
         if not hasattr(self, 'date_range'):
             self.open_warn('You must define a date range')
             return None 
@@ -256,8 +285,7 @@ class Root(BoxLayout):
         while self.date_from < endDate:
             self.Hol.startTime = self.date_from
             self.Hol.endTime = self.date_to
-            threading.Thread(target=self.download).start()
-            print(self.download_progress)
+            self.download()
             self.date_from += timedelta(days=1)
             self.date_to += timedelta(days=1)
         print()
@@ -275,6 +303,7 @@ class Root(BoxLayout):
                 )
                 self.ids.progressbar.max = 1e10
                 return
+            self.ids.download_button.text = '[b][color=252525]Saving records...[/b][/color]'
             self.save_records()
             self.Hol = Hologram(
                 deviceID=self.deviceid,
@@ -284,6 +313,8 @@ class Root(BoxLayout):
                 orgID=self.orgid,
             )
             self.ids.progressbar.value = 0
+            self.ids.download_button.disabled = False
+            self.ids.download_button.text = '[b]Download[/b]'
             
 
     def download_init(self):
@@ -293,6 +324,8 @@ class Root(BoxLayout):
             self.Hol.deviceID = self.ids.deviceID.text.strip()
         else:
             self.Hol.deviceID = None
+        self.ids.download_button.disabled = True
+        self.ids.download_button.text = '[b][color=303030]Downloading...[/b][/color]'
             
 
 
@@ -316,9 +349,11 @@ class Root(BoxLayout):
             filepath=str(self.path[0]),
             sep='\t',
             append=self.ids.append.active,
-            timeDelta=tz_offset[self.ids.timeDelta.text]
+            timeDelta=tz_offset[self.ids.timeDelta.text],
+            absStartDate=self.date_range[0]
         )
         self.open_warn(f'{len(self.Hol.records)} records written to {self.path[0]}', 'Successful download')
+        
         
 
 
