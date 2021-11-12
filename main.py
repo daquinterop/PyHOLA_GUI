@@ -177,7 +177,7 @@ class Root(BoxLayout):
         '''
         if args.get(1) == 'test':
             import os
-            base_date = datetime(2021, 7, 1)
+            base_date = datetime(2021, 10, 31)
             self.date_range = [base_date - timedelta(days=x) for x in range(180)]
             self.date_range = self.date_range[::-1]
             self.path = ['C:\\Users\\dandres\\Desktop\\test.csv']
@@ -303,18 +303,13 @@ class Root(BoxLayout):
                 )
                 self.ids.progressbar.max = 1e10
                 return
-            self.ids.download_button.text = '[b][color=252525]Saving records...[/b][/color]'
-            self.save_records()
-            self.Hol = Hologram(
-                deviceID=self.deviceid,
-                apiKey=self.apikey,
-                startTime=None,
-                endTime=None,
-                orgID=self.orgid,
-            )
+            save_thread = threading.Thread(target=self.save_records)
+            save_thread.start()
+            
+            
             self.ids.progressbar.value = 0
-            self.ids.download_button.disabled = False
-            self.ids.download_button.text = '[b]Download[/b]'
+            
+            
             
 
     def download_init(self):
@@ -345,6 +340,7 @@ class Root(BoxLayout):
 
 
     def save_records(self):
+        self.ids.download_button.text = '[b][color=252525]Saving records...[/b][/color]'
         self.Hol.save_records(
             filepath=str(self.path[0]),
             sep='\t',
@@ -353,6 +349,15 @@ class Root(BoxLayout):
             absStartDate=self.date_range[0]
         )
         self.open_warn(f'{len(self.Hol.records)} records written to {self.path[0]}', 'Successful download')
+        self.Hol = Hologram(
+                deviceID=self.deviceid,
+                apiKey=self.apikey,
+                startTime=None,
+                endTime=None,
+                orgID=self.orgid,
+            )
+        self.ids.download_button.text = '[b]Download[/b]'
+        self.ids.download_button.disabled = False
         
         
 
