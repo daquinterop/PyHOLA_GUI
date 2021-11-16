@@ -122,7 +122,7 @@ class WarningPopup(Popup):
 class AboutUS(Popup):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.title = 'PyHOLA_GUI  Version 0.1.2110'
+        self.title = 'PyHOLA_GUI  Version 0.1.2111a'
         self.size = (450, 450)
         self.size_hint = (None, None)
         self.content = BoxLayout(orientation = 'vertical')
@@ -178,7 +178,7 @@ class Root(BoxLayout):
         if args.get(1) == 'test':
             import os
             base_date = datetime(2021, 10, 31)
-            self.date_range = [base_date - timedelta(days=x) for x in range(180)]
+            self.date_range = [base_date - timedelta(days=x) for x in range(100)]
             self.date_range = self.date_range[::-1]
             self.path = ['C:\\Users\\dandres\\Desktop\\test.csv']
             self.ids.file_label.text = str(self.path[0])
@@ -305,8 +305,6 @@ class Root(BoxLayout):
                 return
             save_thread = threading.Thread(target=self.save_records)
             save_thread.start()
-            
-            
             self.ids.progressbar.value = 0
             
             
@@ -330,7 +328,8 @@ class Root(BoxLayout):
             self.Hol.endTime = self.date_to
             try:
                 self.Hol.retrieve()
-                Clock.schedule_once(functools.partial(self.update_progress))
+                if self.ids.progressbar.value < self.ids.progressbar.max:
+                    Clock.schedule_once(functools.partial(self.update_progress))
             except RequestException:
                 self.ids.progressbar.max -= 1
                 return None
@@ -358,6 +357,7 @@ class Root(BoxLayout):
             )
         self.ids.download_button.text = '[b]Download[/b]'
         self.ids.download_button.disabled = False
+        self.ids.progressbar.value = 0
         
         
 
